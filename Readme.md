@@ -7,7 +7,7 @@ The program was designed to progressively build full-stack expertise — startin
 ---
 
 ## 📂 Repository Structure
-
+```bash
 Alltaskes/
 ├── task01_basic_ssr_form/
 ├── task02_inline_styles_validation/
@@ -19,7 +19,7 @@ Alltaskes/
 └── task08_middleware_jobs_cache/
 
 Each folder is a self-contained project with its own **package.json**, **.env**, and **src/ + public/** code.
-
+```
 ---
 
 ## ✅ Task Breakdown
