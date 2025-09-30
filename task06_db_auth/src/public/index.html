@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Task 6 — DB + Auth</title>
+<style>
+  /* ===== Theme tokens ===== */
+  :root{
+    --brand:#6d28d9;
+    --bg:#0b1220; --panel:#0f172a; --text:#e5e7eb; --muted:#9aa7c7; --border:#203051;
+    --success:#10b981; --danger:#ef4444; --neutral:#334155;
+    --ring: 0 0 0 4px color-mix(in srgb, var(--brand) 30%, transparent);
+    --shadow: 0 10px 30px rgba(0,0,0,.25);
+    --r: 12px;
+  }
+
+  /* ===== Base ===== */
+  *{box-sizing:border-box}
+  body{margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text)}
+  .wrap{max-width:960px; margin:28px auto; padding:0 16px}
+  h1{margin:.2rem 0 1rem; letter-spacing:.3px}
+  .grid{display:grid; grid-template-columns: 1fr 2fr; gap:18px}
+  @media (max-width:900px){ .grid{grid-template-columns:1fr} }
+
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px; box-shadow:var(--shadow)}
+  label{display:block; font-weight:600; margin:.55rem 0 .3rem}
+  input,textarea{
+    width:100%; padding:.7rem .85rem; border-radius:var(--r);
+    border:1px solid var(--border); background:#0d1830; color:var(--text); outline:0
+  }
+  input:focus, textarea:focus{ box-shadow: var(--ring); border-color: color-mix(in srgb, var(--brand) 65%, var(--border)) }
+  textarea{min-height:110px}
+  .row{display:flex; gap:.6rem; align-items:center}
+
+  .muted{color:var(--muted)}
+  .small{font-size:.9rem}
+  .right{margin-left:auto}
+  .toolbar{display:flex; gap:.6rem; align-items:center; margin:.4rem 0 .6rem}
+  .pill{display:inline-block; padding:.12rem .55rem; border-radius:999px; border:1px solid var(--border); font-size:.76rem; background:#0d2148}
+
+  /* ===== Buttons (polished) ===== */
+  .btn{
+    --bg: var(--neutral);
+    --fg: #fff;
+    border:0; border-radius:var(--r); cursor:pointer;
+    padding:.7rem 1rem; background:var(--bg); color:var(--fg);
+    transition:transform .08s ease, filter .15s ease, opacity .15s ease, box-shadow .15s ease;
+    display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+    min-width:112px; font-weight:600; letter-spacing:.1px;
+  }
+  .btn:active{ transform: translateY(1px) }
+  .btn:hover{ filter:brightness(1.06) }
+  .btn:focus-visible{ box-shadow: var(--ring) }
+  .btn[disabled]{ opacity:.6; cursor:progress }
+
+  .btn--brand{ --bg: var(--brand) }
+  .btn--success{ --bg: var(--success); --fg:#052d22 }
+  .btn--ghost{
+    --bg: transparent; --fg: var(--text);
+    border:1px solid var(--border);
+  }
+  .btn--danger{ --bg: var(--danger) }
+
+  /* button layout helpers */
+  .btnbar{ display:flex; gap:.6rem; align-items:center; flex-wrap:wrap }
+  .btnbar .btn{ flex:1 0 140px }          /* equal width on small screens */
+  @media (min-width:520px){
+    .btnbar .btn{ flex:0 0 auto }         /* natural size on larger screens */
+  }
+
+  /* ===== Notes list ===== */
+  ul{list-style:none; margin:0; padding:0}
+  li{border:1px solid var(--border); border-radius:12px; padding:.7rem .8rem; margin:.55rem 0; background:#0e1a33}
+  .title{font-weight:700}
+
+  /* Messages */
+  .err{color:#fecaca}
+  .ok{color:#86efac}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Notes (authenticated)</h1>
+    <div class="grid">
+      <!-- Auth panel -->
+      <section class="card">
+        <h3>Account</h3>
+        <div id="who" class="muted small">Not signed in</div>
+        <hr style="border-color:var(--border); opacity:.4">
+
+        <h4>Register</h4>
+        <label>Email</label>
+        <input id="rEmail" placeholder="you@example.com" autocomplete="email">
+        <label>Password</label>
+        <input id="rPass" type="password" placeholder="min 8 characters" autocomplete="new-password">
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn btn--brand" id="btnReg">Create account</button>
+        </div>
+
+        <h4 style="margin-top:1rem">Login</h4>
+        <label>Email</label>
+        <input id="lEmail" placeholder="you@example.com" autocomplete="email">
+        <label>Password</label>
+        <input id="lPass" type="password" placeholder="your password" autocomplete="current-password">
+        <div class="btnbar" style="margin-top:.6rem">
+          <button class="btn btn--success" id="btnLogin">Login</button>
+          <button class="btn btn--ghost" id="btnLogout">Logout</button>
+        </div>
+
+        <p id="authMsg" class="small"></p>
+      </section>
+
+      <!-- Notes panel -->
+      <section class="card">
+        <div class="toolbar">
+          <input id="q" placeholder="Search notes…">
+          <span class="pill" id="count">0</span>
+          <span class="right small muted">Auto-refresh on login/logout</span>
+        </div>
+
+        <form id="add">
+          <div class="row">
+            <input id="title" placeholder="Note title">
+            <button class="btn btn--brand" type="submit">Add</button>
+          </div>
+          <label style="margin-top:.5rem">Body</label>
+          <textarea id="body" placeholder="Write more…"></textarea>
+        </form>
+
+        <ul id="list"></ul>
+        <p id="listMsg" class="small muted"></p>
+      </section>
+    </div>
+  </div>
+
+<script>
+const $ = (s)=>document.querySelector(s);
+const api = {
+  async me(){ return jget("/auth/me"); },
+  async register(email,password){ return jpost("/auth/register",{email,password}); },
+  async login(email,password){ return jpost("/auth/login",{email,password}); },
+  async logout(){ return jpost("/auth/logout"); },
+  async list(){ return jget("/api/notes"); },
+  async add(title,body){ return jpost("/api/notes",{title,body}); },
+  async update(id,patch){ return jput(`/api/notes/${id}`,patch); },
+  async del(id){ return jdel(`/api/notes/${id}`); }
+};
+
+/* ------- fetch helpers ------- */
+async function jget(url){
+  const r = await fetch(url, { credentials:"same-origin" });
+  if (r.status===401) throw new Error("UNAUTH");
+  if (!r.ok) throw new Error(await safeText(r));
+  return r.json();
+}
+async function jpost(url, body){
+  const r = await fetch(url, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) });
+  if (r.status===401) throw new Error("UNAUTH");
+  if (!r.ok) throw new Error(await safeText(r));
+  return r.json();
+}
+async function jput(url, body){
+  const r = await fetch(url, { method:"PUT", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) });
+  if (r.status===401) throw new Error("UNAUTH");
+  if (!r.ok) throw new Error(await safeText(r));
+  return r.json();
+}
+async function jdel(url){
+  const r = await fetch(url, { method:"DELETE" });
+  if (r.status===401) throw new Error("UNAUTH");
+  if (!r.ok) throw new Error(await safeText(r));
+  return r.json();
+}
+async function safeText(r){ try{const t=await r.text(); return t||r.statusText;}catch{ return r.statusText; } }
+
+/* ------- UI Logic ------- */
+const who = $("#who"), authMsg = $("#authMsg");
+const list = $("#list"), listMsg = $("#listMsg"), count = $("#count");
+const qIn = $("#q");
+
+function setMsg(el, text, ok=false){
+  el.textContent = text || "";
+  el.classList.remove("err","ok");
+  if (!text) return;
+  el.classList.add(ok ? "ok" : "err");
+}
+
+function setLoading(btn, on){
+  btn.toggleAttribute("disabled", !!on);
+  if (on) { btn.dataset.label = btn.textContent; btn.textContent = "Please wait…"; }
+  else if (btn.dataset.label){ btn.textContent = btn.dataset.label; delete btn.dataset.label; }
+}
+
+async function refreshUser(){
+  try{
+    const me = await api.me();
+    who.textContent = `Signed in as ${me.email}`;
+    who.classList.remove("muted");
+    await loadNotes();
+  }catch{
+    who.textContent = "Not signed in";
+    who.classList.add("muted");
+    renderNotes([],"Login to view your notes.");
+  }
+}
+
+function renderNotes(data, msg=""){
+  const q = (qIn.value || "").toLowerCase();
+  const items = data.filter(n => !q || n.title.toLowerCase().includes(q) || (n.body||"").toLowerCase().includes(q));
+  list.innerHTML = items.map(n => `
+    <li data-id="${n.id}">
+      <div class="row">
+        <span class="title">${escapeHtml(n.title)}</span>
+        <span class="right small muted">${new Date(n.createdAt).toLocaleString()}</span>
+      </div>
+      <div class="small" style="margin:.3rem 0">${escapeHtml(n.body || "")}</div>
+      <div class="row">
+        <button class="btn" data-act="edit">Edit</button>
+        <button class="btn btn--danger" data-act="del">Delete</button>
+      </div>
+    </li>
+  `).join("");
+  count.textContent = items.length;
+  listMsg.textContent = msg;
+}
+
+let cache = [];
+async function loadNotes(){
+  try{
+    const data = await api.list();
+    cache = data;
+    renderNotes(cache, cache.length ? "" : "No notes yet — add one!");
+  }catch(e){
+    cache = [];
+    if (e.message==="UNAUTH") renderNotes([], "Login to view your notes.");
+    else renderNotes([], "Could not load notes.");
+  }
+}
+
+/* Register */
+$("#btnReg").addEventListener("click", async (ev)=>{
+  setMsg(authMsg,"");
+  const btn = ev.currentTarget;
+  const email = $("#rEmail").value.trim();
+  const password = $("#rPass").value;
+  if (!email || password.length < 8) { setMsg(authMsg,"Enter valid email and min 8 char password"); return; }
+  try{
+    setLoading(btn,true);
+    await api.register(email,password);
+    setMsg(authMsg,"Registered. Now log in.", true);
+  }catch(e){
+    setMsg(authMsg, e.message || "Registration failed");
+  }finally{ setLoading(btn,false); }
+});
+
+/* Login */
+$("#btnLogin").addEventListener("click", async (ev)=>{
+  setMsg(authMsg,"");
+  const btn = ev.currentTarget;
+  const email = $("#lEmail").value.trim();
+  const password = $("#lPass").value;
+  try{
+    setLoading(btn,true);
+    await api.login(email,password);
+    setMsg(authMsg,"Logged in ✔", true);
+    refreshUser();
+  }catch(e){
+    setMsg(authMsg, e.message || "Login failed");
+  }finally{ setLoading(btn,false); }
+});
+
+/* Logout */
+$("#btnLogout").addEventListener("click", async (ev)=>{
+  const btn = ev.currentTarget;
+  try{
+    setLoading(btn,true);
+    await api.logout();
+    setMsg(authMsg,"Logged out", true);
+    refreshUser();
+  }finally{ setLoading(btn,false); }
+});
+
+/* Add note */
+$("#add").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const title = $("#title").value.trim();
+  const body  = $("#body").value.trim();
+  if (!title) return;
+  try{
+    const note = await api.add(title, body);
+    $("#title").value = ""; $("#body").value = "";
+    cache.unshift(note);
+    renderNotes(cache);
+  }catch(e){
+    setMsg(listMsg, e.message || "Failed to add note");
+  }
+});
+
+/* Edit/Delete */
+list.addEventListener("click", async (e)=>{
+  const act = e.target.dataset.act;
+  if (!act) return;
+  const li = e.target.closest("li");
+  const id = Number(li.dataset.id);
+  if (act === "del"){
+    const prev = [...cache];
+    cache = cache.filter(n => n.id !== id);
+    renderNotes(cache);
+    try{
+      await api.del(id);
+    }catch(err){
+      cache = prev; renderNotes(cache);
+      setMsg(listMsg, err.message || "Delete failed");
+    }
+  }
+  if (act === "edit"){
+    const note = cache.find(n => n.id === id);
+    const t = prompt("Edit title:", note.title);
+    if (t === null) return;
+    const b = prompt("Edit body:", note.body || "");
+    try{
+      const updated = await api.update(id, { title: t, body: b });
+      Object.assign(note, updated);
+      renderNotes(cache);
+    }catch(err){
+      setMsg(listMsg, err.message || "Update failed");
+    }
+  }
+});
+
+/* search */
+let t; qIn.addEventListener("input", ()=>{
+  clearTimeout(t); t = setTimeout(()=> renderNotes(cache), 120);
+});
+
+function escapeHtml(s){
+  return String(s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+window.addEventListener("load", refreshUser);
+</script>
+</body>
+</html>

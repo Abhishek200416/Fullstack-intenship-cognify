@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <title>Task 2 — Advanced Inline Validation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#f8fafc; --panel:#ffffff; --text:#0f172a; --muted:#64748b;
+      --primary:#111827; --primary-fg:#fff;
+      --ok:#10b981; --warn:#b91c1c; --border:#e5e7eb; --shadow:0 6px 24px rgba(15,23,42,.06);
+      --input-bg:#fff; --input-border:#e5e7eb; --input-focus:#111827;
+    }
+    [data-theme="dark"]{
+      --bg:#0b1020; --panel:#0f172a; --text:#e5e7eb; --muted:#93a3b8;
+      --primary:#4f46e5; --primary-fg:#fff;
+      --ok:#34d399; --warn:#f87171; --border:#1e293b; --shadow:0 6px 24px rgba(2,6,23,.45);
+      --input-bg:#0b1226; --input-border:#273449; --input-focus:#7c89ff;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+      color:var(--text); background: radial-gradient(1200px 600px at 10% -10%, rgba(79,70,229,.12), transparent 55%), var(--bg);
+    }
+
+    .container{max-width:760px; margin:2.25rem auto; padding:0 1rem}
+    .header{
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;
+    }
+    .brand{
+      display:flex; gap:.6rem; align-items:center; font-weight:800; letter-spacing:.2px;
+    }
+    .brand .logo{
+      width:36px; height:36px; border-radius:10px;
+      background: linear-gradient(135deg,#4f46e5, #06b6d4);
+      box-shadow: 0 8px 30px rgba(79,70,229,.35);
+    }
+    .header .actions{display:flex; gap:.5rem; align-items:center}
+    .toggle{
+      border:1px solid var(--border); background:var(--panel); color:var(--text);
+      border-radius:10px; padding:.5rem .7rem; cursor:pointer; box-shadow:var(--shadow);
+    }
+
+    .panel{
+      background:var(--panel); padding:1.25rem; border:1px solid var(--border);
+      border-radius:16px; box-shadow:var(--shadow);
+    }
+    .title{margin:0 0 .25rem 0; font-size:1.65rem}
+    .subtitle{margin:0 0 1rem 0; color:var(--muted)}
+    .errors{
+      background: color-mix(in srgb, var(--warn) 10%, transparent);
+      border:1px solid color-mix(in srgb, var(--warn) 25%, var(--border));
+      color:var(--warn); padding:.85rem 1rem; border-radius:12px; margin-bottom:1rem;
+    }
+
+    label{ display:block; margin:.9rem 0 .35rem; font-weight:600; }
+    .row{ display:flex; gap:1rem; flex-wrap:wrap }
+    .col{ flex:1 1 240px }
+
+    input, textarea{
+      width:100%; padding:.75rem .85rem; border-radius:12px;
+      background:var(--input-bg); color:var(--text);
+      border:1px solid var(--input-border);
+      outline: none; transition: border-color .16s ease, box-shadow .16s ease, background .2s ease;
+    }
+    input:focus, textarea:focus{
+      border-color:var(--input-focus);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--input-focus) 20%, transparent);
+    }
+    input.ok, textarea.ok{ border-color: color-mix(in srgb, var(--ok) 70%, var(--input-border)); background: color-mix(in srgb, var(--ok) 8%, var(--input-bg)); }
+    input.invalid, textarea.invalid{ border-color: var(--warn); background: color-mix(in srgb, var(--warn) 7%, var(--input-bg)); }
+
+    .hint{ color:var(--muted); font-size:.9rem}
+    .checkbox{ display:flex; align-items:center; gap:.6rem; margin-top:.6rem }
+    .meta{ color:var(--muted); font-size:.85rem; margin-top:.3rem }
+
+    .btn{
+      margin-top:1rem; padding:.8rem 1rem; border:0; border-radius:12px;
+      background:var(--primary); color:var(--primary-fg); cursor:pointer;
+      font-weight:700; letter-spacing:.2px;
+      box-shadow: 0 10px 30px color-mix(in srgb, var(--primary) 35%, transparent);
+      transition: transform .06s ease, box-shadow .2s ease, opacity .2s ease;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn:disabled{ opacity:.6; cursor:not-allowed }
+
+    .sr-only{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+
+    /* tiny toast */
+    .toast{
+      position: fixed; right: 16px; bottom: 16px; background: var(--panel); color: var(--text);
+      border:1px solid var(--border); border-radius:12px; padding:.7rem .9rem; box-shadow:var(--shadow);
+      opacity:0; transform: translateY(8px); transition: .25s ease;
+    }
+    .toast.show{ opacity:1; transform: translateY(0) }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>Register</div>
+      </div>
+      <div class="actions">
+        <button id="themeBtn" class="toggle" type="button" aria-label="Toggle theme">🌙</button>
+        <a href="/submissions" class="toggle">📄 Submissions</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h1 class="title">Create your account</h1>
+      <p class="subtitle">Inline validation with autosave, progressive enhancement, and a11y-friendly focus states.</p>
+
+      <% if (errorList && errorList.length) { %>
+        <div class="errors">
+          <strong>We found a few issues:</strong>
+          <ul>
+            <% errorList.forEach(function(msg){ %><li><%= msg %></li><% }) %>
+          </ul>
+        </div>
+      <% } %>
+
+      <form id="form" method="POST" action="/submit" onsubmit="return validate(event)" novalidate>
+        <!-- Honeypot -->
+        <label class="sr-only">Website <input name="website" tabindex="-1" autocomplete="off"></label>
+
+        <label>Name</label>
+        <input id="name" name="name" minlength="2" required value="<%= values.name %>" placeholder="Jane Doe" />
+
+        <label>Email</label>
+        <input id="email" name="email" type="email" required value="<%= values.email %>" placeholder="jane@acme.io" />
+        <div class="hint">We’ll never share or sell your email. Pinky promise.</div>
+
+        <div class="row">
+          <div class="col">
+            <label>Age</label>
+            <input id="age" name="age" type="number" min="1" max="120" required value="<%= values.age %>" placeholder="24" />
+          </div>
+          <div class="col">
+            <label>Phone <span class="hint">(optional)</span></label>
+            <input id="phone" name="phone" placeholder="+1 555 555 5555" value="<%= values.phone %>" />
+          </div>
+        </div>
+
+        <label class="checkbox">
+          <input id="agree" name="agree" type="checkbox" <%= values.agree ? "checked" : "" %> >
+          <span>I agree to the terms.</span>
+        </label>
+
+        <div class="meta" id="autosaveStatus">Draft: not saved</div>
+        <button id="submitBtn" type="submit" class="btn">Create account</button>
+      </form>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Draft saved</div>
+
+  <script>
+    // === Theme toggle (persists) ===
+    const themeBtn = document.getElementById('themeBtn');
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem('t2_theme');
+    if(savedTheme){ root.setAttribute('data-theme', savedTheme); themeBtn.textContent = savedTheme==='dark' ? '🌞' : '🌙'; }
+    themeBtn.addEventListener('click', ()=>{
+      const now = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', now); localStorage.setItem('t2_theme', now);
+      themeBtn.textContent = now==='dark' ? '🌞' : '🌙';
+    });
+
+    // ==== Inline validation ====
+    const nameIn = document.getElementById('name');
+    const emailIn = document.getElementById('email');
+    const ageIn = document.getElementById('age');
+    const phoneIn = document.getElementById('phone');
+    const agreeIn = document.getElementById('agree');
+    const form = document.getElementById('form');
+    const submitBtn = document.getElementById('submitBtn');
+    const LS_KEY = 't2_draft_v1';
+    const autosaveStatus = document.getElementById('autosaveStatus');
+    const toast = document.getElementById('toast');
+
+    function mark(el, ok){
+      el.classList.remove('invalid','ok');
+      el.classList.add(ok ? 'ok':'invalid');
+    }
+    function validName(){ const ok = nameIn.value.trim().length >= 2; mark(nameIn, ok); return ok; }
+    function validEmail(){ const ok = /^\S+@\S+\.\S+$/.test(emailIn.value.trim()); mark(emailIn, ok); return ok; }
+    function validAge(){ const n = parseInt(ageIn.value,10); const ok = Number.isFinite(n) && n>=1 && n<=120; mark(ageIn, ok); return ok; }
+    function validPhone(){ const v = phoneIn.value.trim(); const ok = v==='' || /^[0-9+\-()\s]{7,20}$/.test(v); mark(phoneIn, ok); return ok; }
+    function validAgree(){ return agreeIn.checked; }
+
+    function validateFields(showAlert=true){
+      const e = [];
+      if(!validName()) e.push('Name must be at least 2 characters.');
+      if(!validEmail()) e.push('Enter a valid email.');
+      if(!validAge()) e.push('Age must be 1–120.');
+      if(!validPhone()) e.push('Phone format is invalid.');
+      if(!validAgree()) e.push('You must accept the terms.');
+      if(showAlert && e.length) alert('Fix fields: ' + e.join(', '));
+      submitBtn.disabled = e.length > 0;
+      return e;
+    }
+
+    // === Draft autosave + toast
+    function showToast(msg){
+      toast.textContent = msg; toast.classList.add('show');
+      setTimeout(()=> toast.classList.remove('show'), 1100);
+    }
+    function saveDraft(){
+      const payload = { name: nameIn.value, email: emailIn.value, age: ageIn.value, phone: phoneIn.value, agree: agreeIn.checked };
+      localStorage.setItem(LS_KEY, JSON.stringify(payload));
+      autosaveStatus.textContent = 'Draft: saved';
+      showToast('Draft saved');
+    }
+    function loadDraft(){
+      try {
+        const raw = localStorage.getItem(LS_KEY);
+        if(!raw) return;
+        const d = JSON.parse(raw);
+        nameIn.value = d.name || '';
+        emailIn.value = d.email || '';
+        ageIn.value = d.age || '';
+        phoneIn.value = d.phone || '';
+        agreeIn.checked = !!d.agree;
+        autosaveStatus.textContent = 'Draft: restored';
+      } catch {}
+    }
+
+    [nameIn,emailIn,ageIn,phoneIn,agreeIn].forEach(el=>{
+      el.addEventListener('input', ()=>{ validateFields(false); saveDraft(); });
+      if(el.type === 'checkbox') el.addEventListener('change', ()=>{ validateFields(false); saveDraft(); });
+    });
+
+    loadDraft();
+    validateFields(false);
+
+    // ==== Progressive enhancement: AJAX submit (falls back) ====
+// ==== Progressive enhancement: AJAX submit (falls back) ====
+async function validate(ev){
+  const errs = validateFields(true);
+  if(errs.length){ ev.preventDefault(); return false; }
+
+  try{
+    ev.preventDefault();
+    const fd = new FormData(form);
+
+    // Convert to URL-encoded instead of multipart/form-data
+    const body = new URLSearchParams();
+    for (const [k, v] of fd.entries()) {
+      body.append(k, typeof v === 'string' ? v : String(v));
+    }
+
+    localStorage.removeItem(LS_KEY);
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting…';
+
+    const res = await fetch('/submit', {
+      method:'POST',
+      body,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+      }
+    });
+
+    if(!res.ok){
+      const j = await res.json().catch(()=>({errors:['Unknown error']}));
+      alert('Server says: ' + (j.errors?.join(', ') || res.statusText));
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create account';
+      return false;
+    }
+
+    window.location.href = '/submissions';
+    return false;
+  }catch(_){
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Create account';
+    return true; // fall back to normal submit on network error
+  }
+}
+
+  </script>
+</body>
+</html>

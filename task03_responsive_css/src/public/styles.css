@@ -1,0 +1,115 @@
+/* ========= THEME TOKENS ========= */
+:root{
+  --brand:#6d28d9; /* overridden by picker */
+  --bg:#0b1220; --panel:#0e1628; --text:#ffffff; --muted:#c8d1e6; --subtle:#0a1326;
+  --border:#1b2740; --shadow:0 20px 60px rgba(8,12,22,.35);
+  --hero-grad: radial-gradient(1200px 600px at 10% -10%, color-mix(in srgb, var(--brand) 35%, transparent), transparent 60%),
+               linear-gradient(120deg,#0b1020,#0c1530 40%, #061635 70%, #03122e);
+  --toggler-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3e%3cpath stroke='white' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+
+  /* Make Bootstrap consume our palette */
+  --bs-body-color: var(--text);
+  --bs-body-bg: var(--bg);
+  --bs-border-color: var(--border);
+}
+
+[data-theme="light"]{
+  --bg:#f7f9fc; --panel:#ffffff; --text:#0f172a; --muted:#64748b; --subtle:#f2f5fb;
+  --border:#e5e7eb; --shadow:0 10px 35px rgba(15,23,42,.08);
+  --hero-grad: radial-gradient(1200px 600px at 10% -10%, color-mix(in srgb, var(--brand) 20%, transparent), transparent 60%),
+               linear-gradient(120deg,#111827,#1f2937 40%, #243b53 70%, #1f2a44);
+  --toggler-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3e%3cpath stroke='%23111827' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* ========= BASE ========= */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background:var(--bg); color:var(--text);
+}
+img{display:block; max-width:100%}
+a{color:var(--text); text-decoration:none}
+.border-top{border-top:1px solid var(--border)!important}
+.border-bottom{border-bottom:1px solid var(--border)!important}
+.bg-panel{background:var(--panel)!important}
+.bg-subtle{background:var(--subtle)!important}
+.muted{color:var(--muted)!important}
+.fw-800{font-weight:800}
+
+/* Nav: force readable across themes */
+.navbar .navbar-brand,
+.navbar .nav-link{ color:var(--text)!important; opacity:.95 }
+.navbar .nav-link:hover{ opacity:1 }
+.navbar .navbar-toggler{ border-color:var(--border)!important }
+.navbar .navbar-toggler-icon{ background-image:var(--toggler-icon)!important }
+
+/* ========= BRAND ELEMENTS ========= */
+.logo{
+  width:28px; height:28px; border-radius:8px;
+  background:linear-gradient(135deg,var(--brand),#06b6d4);
+  box-shadow:0 8px 30px color-mix(in srgb,var(--brand) 40%, transparent)
+}
+.btn-brand{ background:var(--brand); color:#fff; border:0 }
+.btn-brand:hover{ filter:brightness(1.05) }
+.btn-ghost{
+  background:transparent; color:var(--text);
+  border:1px solid var(--border)
+}
+.btn-ghost:hover{ background:color-mix(in srgb, var(--brand) 12%, transparent) }
+.color{
+  inline-size:34px; block-size:34px; border-radius:8px;
+  background:var(--panel); border:1px solid var(--border)
+}
+
+/* ========= HERO ========= */
+.hero{ min-height:64vh; background:var(--hero-grad); position:relative; overflow:hidden }
+.text-hero{ color:#fff } /* keep hero text bright in both themes */
+@media (prefers-reduced-motion:no-preference){
+  .fade-in{ animation:fade .9s ease both }
+  @keyframes fade{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+}
+
+/* ========= CARDS / PLANS ========= */
+/* Hard enforce white-ish text in dark theme inside cards/lists */
+.card, .plan{
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:16px; box-shadow:var(--shadow); padding:1rem;
+  color: var(--text) !important;   /* <— key fix */
+}
+.card h1,.card h2,.card h3,.card h4,.card h5,.card h6,
+.card p,.card li,.card span,
+.plan h1,.plan h2,.plan h3,.plan h4,.plan h5,.plan h6,
+.plan p,.plan li,.plan span{ color: inherit !important }
+.card .muted, .plan .muted{ color: var(--muted) !important }
+
+.hover-rise{ transition:transform .18s ease, box-shadow .25s ease }
+.hover-rise:hover{ transform:translateY(-4px); box-shadow:0 22px 55px color-mix(in srgb, var(--brand) 22%, transparent) }
+.icon .material-symbols-rounded{ font-size:28px; color:var(--brand) }
+.plan{ position:relative }
+.plan .price{ font-size:2rem; font-weight:800; margin:.25rem 0 }
+.plan .badge{
+  position:absolute; right:12px; top:12px; background:var(--brand); color:#fff;
+  border-radius:999px; padding:.2rem .5rem; font-size:.8rem
+}
+.plan-pop{ border-color: color-mix(in srgb, var(--brand) 45%, var(--border)) }
+
+/* ========= GALLERY ========= */
+.tile{
+  aspect-ratio:1/1; border-radius:12px; object-fit:cover;
+  border:1px solid var(--border)
+}
+
+/* ========= FORMS ========= */
+.form{
+  background:var(--panel); color:var(--text);
+  border:1px solid var(--border); border-radius:12px
+}
+.form:focus{
+  border-color: color-mix(in srgb, var(--brand) 70%, var(--border));
+  box-shadow:0 0 0 4px color-mix(in srgb, var(--brand) 25%, transparent);
+  outline:0
+}
+.form::placeholder{ color: color-mix(in srgb, var(--muted) 80%, transparent) }
+.form-control{ color:var(--text) }
+.form-control::placeholder{ color: color-mix(in srgb, var(--muted) 80%, transparent) }

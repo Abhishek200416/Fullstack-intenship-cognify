@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Task 1 — Secure SSR Contact Form</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --red:#b91c1c; --ok:#065f46; }
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; }
+    .errors { background:#fee2e2; border:1px solid #fecaca; color:var(--red); padding:.75rem 1rem; border-radius:.5rem; }
+    label { display:block; margin-top: .75rem; font-weight:600; }
+    input, textarea { width: 100%; padding: .6rem; border:1px solid #ddd; border-radius:.4rem; }
+    button { margin-top: 1rem; padding: .6rem .9rem; border:0; border-radius:.4rem; cursor:pointer; background:#111827; color:#fff; }
+    .hint { font-size:.85rem; color:#6b7280; }
+    .sr-only { position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden; }
+  </style>
+</head>
+<body>
+  <h1>Contact Form</h1>
+
+  <% if (errorList && errorList.length) { %>
+    <div class="errors">
+      <strong>Please fix the following:</strong>
+      <ul>
+        <% errorList.forEach(function(msg){ %>
+          <li><%= msg %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <form method="POST" action="/submit" novalidate>
+    <!-- CSRF -->
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>"/>
+
+    <!-- Honeypot (bots fill this) -->
+    <label class="sr-only">Website
+      <input name="website" autocomplete="off" tabindex="-1" />
+    </label>
+
+    <label>Name
+      <input name="name" minlength="2" required value="<%= values.name %>" />
+    </label>
+
+    <label>Email
+      <input name="email" type="email" required value="<%= values.email %>" />
+      <div class="hint">We’ll never share your email.</div>
+    </label>
+
+    <label>Message
+      <textarea name="message" rows="6" minlength="5" maxlength="1000" required><%= values.message %></textarea>
+      <div class="hint">5–1000 characters.</div>
+    </label>
+
+    <button type="submit">Send</button>
+  </form>
+</body>
+</html>

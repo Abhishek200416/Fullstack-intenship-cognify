@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <title>Submissions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#f8fafc; --panel:#ffffff; --text:#0f172a; --muted:#64748b;
+      --primary:#111827; --primary-fg:#fff; --border:#e5e7eb; --shadow:0 6px 24px rgba(15,23,42,.06);
+      --row:#fbfdff; --row2:#f6f9fc; --chip:#eef2ff;
+    }
+    [data-theme="dark"]{
+      --bg:#0b1020; --panel:#0f172a; --text:#e5e7eb; --muted:#93a3b8;
+      --primary:#4f46e5; --primary-fg:#fff; --border:#1e293b; --shadow:0 6px 24px rgba(2,6,23,.45);
+      --row:#0c142a; --row2:#081127; --chip:#1f2a5a;
+    }
+
+    *{box-sizing:border-box}
+    body{ margin:0; color:var(--text); background:var(--bg); font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; }
+    .container{ max-width:980px; margin:2rem auto; padding:0 1rem }
+
+    .bar{
+      display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; margin-bottom:1rem;
+    }
+    .chip{
+      padding:.35rem .55rem; background:var(--chip); border-radius:999px; font-size:.85rem; color:var(--muted);
+    }
+    input, select{
+      padding:.6rem .7rem; border:1px solid var(--border); border-radius:10px; background:var(--panel); color:var(--text);
+      outline:none; transition:border-color .16s ease, box-shadow .16s ease;
+    }
+    input:focus, select:focus{ border-color:#4f46e5; box-shadow:0 0 0 4px rgba(79,70,229,.18); }
+    .btn{
+      padding:.65rem .85rem; border:0; border-radius:10px; background:var(--primary); color:var(--primary-fg);
+      font-weight:700; letter-spacing:.2px; cursor:pointer; box-shadow:var(--shadow);
+    }
+    .ghost{ background:transparent; color:var(--text); border:1px solid var(--border); }
+
+    .panel{ background:var(--panel); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); overflow:hidden }
+    .table-wrap{ overflow:auto; max-height:70vh; }
+    table{ width:100%; border-collapse:separate; border-spacing:0 }
+    thead th{
+      position:sticky; top:0; background:var(--panel); border-bottom:1px solid var(--border);
+      text-align:left; padding:.7rem .75rem; font-size:.9rem;
+    }
+    tbody td{ padding:.65rem .75rem; border-bottom:1px solid var(--border); }
+    tbody tr:nth-child(odd){ background:var(--row) }
+    tbody tr:nth-child(even){ background:var(--row2) }
+
+    .muted{ color:var(--muted) }
+    .header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:.75rem; }
+    .title{ margin:0; font-size:1.6rem }
+    .actions{ display:flex; gap:.5rem; align-items:center }
+    .stat{ display:flex; gap:.5rem; align-items:center; color:var(--muted) }
+
+    .pager{ margin-top:1rem; display:flex; gap:.5rem; align-items:center; justify-content:flex-end }
+    .empty{ padding:2rem; text-align:center; color:var(--muted) }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">Submissions</h1>
+      <div class="actions">
+        <a href="/" class="btn ghost">← Back</a>
+        <button id="themeBtn" class="btn ghost" type="button">🌙</button>
+      </div>
+    </div>
+
+    <form class="bar panel" method="GET" style="padding: .85rem">
+      <span class="chip">Total: <%= total %></span>
+      <label>Search <input name="q" value="<%= q %>" placeholder="name or email"></label>
+      <label>Page <input name="page" type="number" min="1" value="<%= page %>" style="width:5.5rem"></label>
+      <label>Limit <input name="limit" type="number" min="1" max="25" value="<%= limit %>" style="width:5.5rem"></label>
+      <button class="btn" style="margin-left:auto">Apply</button>
+      <a class="btn" href="/export.csv?<%= 'q=' + encodeURIComponent(q||'') %>">Export CSV</a>
+    </form>
+
+    <section class="panel">
+      <% if (submissions.length === 0) { %>
+        <div class="empty">No submissions yet. Try adjusting the search or add a new one.</div>
+      <% } else { %>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th style="width:72px">ID</th><th>Name</th><th>Email</th><th style="width:90px">Age</th><th>Phone</th><th style="width:220px">Created</th></tr>
+            </thead>
+            <tbody>
+              <% submissions.forEach(s=>{ %>
+                <tr>
+                  <td><%= s.id %></td>
+                  <td><%= s.name %></td>
+                  <td><%= s.email %></td>
+                  <td><%= s.age %></td>
+                  <td><%= s.phone %></td>
+                  <td class="muted"><%= s.createdAt %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </section>
+
+    <div class="pager">
+      <span class="stat">Page <b><%= page %></b> of <b><%= pages %></b></span>
+      <% if (page > 1) { %>
+        <a class="btn ghost" href="?q=<%= encodeURIComponent(q||'') %>&page=<%= page-1 %>&limit=<%= limit %>">Prev</a>
+      <% } %>
+      <% if (page < pages) { %>
+        <a class="btn" href="?q=<%= encodeURIComponent(q||'') %>&page=<%= page+1 %>&limit=<%= limit %>">Next</a>
+      <% } %>
+    </div>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    const themeBtn = document.getElementById('themeBtn');
+    const saved = localStorage.getItem('t2_theme');
+    if(saved){ root.setAttribute('data-theme', saved); themeBtn.textContent = saved==='dark' ? '🌞' : '🌙'; }
+    themeBtn.addEventListener('click', ()=>{
+      const now = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', now); localStorage.setItem('t2_theme', now);
+      themeBtn.textContent = now==='dark' ? '🌞' : '🌙';
+    });
+  </script>
+</body>
+</html>

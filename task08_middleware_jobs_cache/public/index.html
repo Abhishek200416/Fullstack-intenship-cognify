@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Task 8 — Jobs + Cache (No Docker)</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="card">
+    <h1>Task 8 — Advanced Server-side (No Docker)</h1>
+    <p class="muted">Middleware • Background Jobs • Memory Cache • Health • Rate Limit • Graceful Shutdown</p>
+
+    <section>
+      <h3>Health</h3>
+      <button id="btnHealth" class="btn">GET /api/health</button>
+      <pre id="health" class="pre"></pre>
+    </section>
+
+    <section>
+      <h3>Report (rebuilt every minute)</h3>
+      <button id="btnReport" class="btn">GET /api/report</button>
+      <pre id="report" class="pre"></pre>
+    </section>
+
+    <section>
+      <h3>Heavy (cached 30s)</h3>
+      <label for="n" class="label">n:</label>
+      <input id="n" class="input" value="200000" inputmode="numeric" />
+      <button id="btnHeavy" class="btn">GET /api/heavy</button>
+      <pre id="heavy" class="pre"></pre>
+    </section>
+
+    <section>
+      <h3>Background job</h3>
+      <label for="nb" class="label">n:</label>
+      <input id="nb" class="input" value="250000" inputmode="numeric" />
+      <div class="row">
+        <button id="btnEnqueue" class="btn btn-brand">POST /api/enqueue</button>
+        <button id="btnPoll" class="btn">Poll job</button>
+      </div>
+      <pre id="enqueue" class="pre"></pre>
+      <pre id="poll" class="pre"></pre>
+    </section>
+  </div>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

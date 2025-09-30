@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Task 7 — OAuth + External API</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div id="signedOut">
+        <h1>GitHub OAuth Demo</h1>
+        <p class="muted">Sign in with GitHub and list your repositories via GitHub’s REST API.</p>
+        <a class="btn btn-brand" href="/auth/github">Login with GitHub</a>
+      </div>
+
+      <div id="signedIn" hidden>
+        <div class="row head">
+          <div class="row">
+            <img id="avatar" class="avatar" alt="">
+            <div>
+              <div id="who" class="who">—</div>
+              <div class="muted small">Authenticated with GitHub OAuth</div>
+            </div>
+          </div>
+          <button id="logout" class="btn btn-ghost">Logout</button>
+        </div>
+
+        <hr class="rule">
+
+        <div class="row">
+          <input id="q" class="input" placeholder="Search your repos…">
+          <span id="count" class="pill">0</span>
+          <button id="reload" class="btn">Refresh</button>
+        </div>
+
+        <ul id="list" class="list"></ul>
+        <p id="msg" class="muted small"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
